@@ -1,0 +1,4 @@
+filename=apollo-accounts-export.csv
+output_name=scrape_result.csv
+chrome_driver_path=D:\bin\google\Chrome\Application\chrome.exe
+google_browser_path=D:\bin\driver\chromedriver.exe
