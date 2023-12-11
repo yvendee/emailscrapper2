@@ -1,5 +1,7 @@
 # emailscrapper2
 
+## First download or clone this repo.
+
 ## Assume you have already install python 3,Install python libraries
 ### macOS:
 
