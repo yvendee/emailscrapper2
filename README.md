@@ -13,7 +13,7 @@ cd /path/to/your/project
 ```
 3. Install the requirements using pip:
 ```
-pip install -r requirements.txt
+pip3 install -r requirements.txt
 ```
 
 ### Windows:
