@@ -3,26 +3,33 @@ import os
 import re
 import time
 
+# first_delimiter = "mailto:"
+symbol_string = "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ@."
+
 def get_csvlist(__fullpath):
     try:
         with open(__fullpath, "r+", encoding='iso-8859-1') as __f:
             __list = list(__f)
             __f.close()
             __converted_list = [i.strip() for i in __list]
-            print('[+] INFO: total lines:', len(__converted_list))
+            print('[+] INFO: total config lines:', len(__converted_list))
             return __converted_list
     except FileNotFoundError:
         print("[+] ERROR: file not found", __fullpath)
         return []
 
-def parse(__string, __first_str_delimiter, __second_str_delimiter):
+def parse(__string, __first_str_delimiter, __alphabet_string):
     start_index = __string.find(__first_str_delimiter)
-    end_index = __string.find(__second_str_delimiter, start_index)
-    
-    if start_index != -1 and end_index != -1:
-        return __string[start_index + len(__first_str_delimiter):end_index]
-    else:
-        return ""
+
+    if start_index != -1:
+        for end_index in range(start_index + len(__first_str_delimiter), start_index + len(__first_str_delimiter) + 40):
+            if end_index < len(__string):
+                if __string[end_index] not in __alphabet_string:
+                    return __string[start_index + len(__first_str_delimiter):end_index]
+            else:
+                break
+        # If the loop completes without finding the second delimiter, return an empty string
+    return ""
 
 def save_data(company, website, email):
     global output_name
@@ -86,8 +93,6 @@ with open(file_path, 'r', encoding='utf-8') as file:
 
         if not (website_data == ""):
             # Print the status and website data
-            print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
-
             site = website_data
             retry = 0
             email_match = ""
@@ -97,22 +102,13 @@ with open(file_path, 'r', encoding='utf-8') as file:
                     if retry >= 3:
                         break
 
-                    # Open the URL
+                    print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
                     r = session.get(website_data)
-                    r.html.render(sleep=2, timeout=10)
-
-                    # Get the HTML source after JavaScript rendering
-                    html_source = r.html.html
-
-                    # Extract email
-                    email_match = parse(html_source, 'mailto:', '"')
-
+                    r.html.render(sleep=2, timeout=10)                    # Get the HTML source after JavaScript rendering
+                    html_source = r.html.html     # Extract email
+                    email_match = parse(html_source, "mailto:", symbol_string)
+                    # email_match = parse(html_source, 'mailto:', '"')
                     if '@' in email_match:
-                        if len(email_match) >= 30:
-                            email_match = parse(html_source, 'mailto:', '?')
-
-                            if '@' in email_match and len(email_match) >= 30:
-                                email_match = "No email found"
                         break
                     else:
                         retry += 1
@@ -123,7 +119,7 @@ with open(file_path, 'r', encoding='utf-8') as file:
                 except Exception as e:
                     retry += 1
                     time.sleep(1)
-                    print("trying...")
+                    print(f"trying... in {website_data}")
                     if retry == 1:
                         website_data = website_data + "/contact"
                     pass
