@@ -104,11 +104,13 @@ with open(file_path, 'r', encoding='utf-8') as file:
         if not (website_data == ""):
             # Print the status and website data
             site = website_data
-            email_match = ""
+            retry = 0
+            email_match = []
             scrape_mode = 0
             while True:
+                if(retry > 3):
+                    break
                 try:
-
                     if(scrape_mode == 0):
                         print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
                         r = session.get(website_data)
@@ -137,9 +139,9 @@ with open(file_path, 'r', encoding='utf-8') as file:
                             break
 
                 except Exception as e:
+                    retry += 1
                     time.sleep(1)
                     print(f"exception... in {website_data} skipped!")
-                    break
 
             emails_address = email_match
             if not emails_address == []:
