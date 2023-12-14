@@ -31,6 +31,16 @@ def parse(__string, __first_str_delimiter, __alphabet_string):
         # If the loop completes without finding the second delimiter, return an empty string
     return ""
 
+def extract_emails(input_string):
+    # Define the regular expression pattern for matching email addresses
+    email_pattern = r'\b[A-Za-z0-9._%+-]+@[A-Za-z0-9.-]+\.[A-Z|a-z]{2,}\b'
+
+    # Use re.findall to extract all email addresses from the input_string
+    emails = re.findall(email_pattern, input_string)
+
+    # If no emails are found, return an empty list
+    return emails if emails else []
+
 def save_data(company, website, email):
     global output_name
     # Output file path
@@ -94,40 +104,58 @@ with open(file_path, 'r', encoding='utf-8') as file:
         if not (website_data == ""):
             # Print the status and website data
             site = website_data
-            retry = 0
             email_match = ""
-            
-            while retry < 3:
+            scrape_mode = 0
+            while True:
                 try:
-                    if retry >= 3:
-                        break
 
-                    print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
-                    r = session.get(website_data)
-                    r.html.render(sleep=2, timeout=10)                    # Get the HTML source after JavaScript rendering
-                    html_source = r.html.html     # Extract email
-                    email_match = parse(html_source, "mailto:", symbol_string)
-                    # email_match = parse(html_source, 'mailto:', '"')
-                    if '@' in email_match:
-                        break
-                    else:
-                        retry += 1
-                        time.sleep(1)
-                        if retry == 1:
-                            website_data = website_data + "/contact"
+                    if(scrape_mode == 0):
+                        print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
+                        r = session.get(website_data)
+                        r.html.render(sleep=2, timeout=10)                    # Get the HTML source after JavaScript rendering
+                        html_source = r.html.html     
+                        # Extract email
+                        email_match = extract_emails(html_source)
+                        # email_match = parse(html_source, 'mailto:', '"')
+                        if not email_match == []:
+                            break
+                        else:
+                            scrape_mode = 1
+
+                    if(scrape_mode == 1):
+                        website_data = website_data + "/contact"
+                        print(f"{current_line}/{total_lines} - Visiting Website:", website_data)
+                        r = session.get(website_data)
+                        r.html.render(sleep=2, timeout=10)                    # Get the HTML source after JavaScript rendering
+                        html_source = r.html.html     
+                        # Extract email
+                        email_match = extract_emails(html_source)
+                        if not email_match == []:
+                            break
+                        else:
+                            scrape_mode = 0
+                            break
 
                 except Exception as e:
-                    retry += 1
                     time.sleep(1)
-                    print(f"trying... in {website_data}")
-                    if retry == 1:
-                        website_data = website_data + "/contact"
-                    pass
+                    print(f"exception... in {website_data} skipped!")
+                    break
 
-            email_address = email_match
-            if email_address:
-                print("Extracted Email Address:", email_address)
-                save_data(company_data, site, email_address)
+            emails_address = email_match
+            if not emails_address == []:
+                print("Extracted Email Address:", emails_address)
+
+                email_count = 0
+                email_csv_string = ""
+
+                for email in emails_address:
+                    if(email_count == 0):
+                        email_csv_string = email + ","
+                    else:
+                        email_csv_string = email_csv_string + email + ","
+                    email_count+=1
+
+                save_data(company_data, site, email_csv_string)
             else:
                 print("No email address found.")
                 save_data(company_data, site, "No email found")
