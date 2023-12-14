@@ -145,6 +145,9 @@ with open(file_path, 'r', encoding='utf-8') as file:
 
             emails_address = email_match
             if not emails_address == []:
+                ## remove identical emails
+                emails_address = list(set(emails_address))
+                
                 print("Extracted Email Address:", emails_address)
 
                 email_count = 0
